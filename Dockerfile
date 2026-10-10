@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-# Install dependencies sistem & ekstensi PHP
+# Install dependencies sistem, ekstensi PHP, dan Node.js
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -9,7 +9,12 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    nginx
+    nginx \
+    gnupg
+
+# Install Node.js (v20) untuk build Vite
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
 
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
@@ -20,8 +25,9 @@ WORKDIR /var/www
 
 COPY . .
 
-# Install dependency laravel
+# Install PHP dependencies & build frontend assets (Vite)
 RUN composer install --no-dev --optimize-autoloader
+RUN npm install && npm run build
 
 # Atur permission
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
